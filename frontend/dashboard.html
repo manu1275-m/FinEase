@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FinEase Dashboard</title>
+    <link rel="stylesheet" href="styles_dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <h1>FinEase – AI Financial Dashboard</h1>
+
+    <div class="upload-section">
+        <h2>Upload NGO Financial CSV/Excel</h2>
+        <input type="file" id="fileInput">
+        <button onclick="uploadFile()">Analyze File</button>
+        <p id="uploadStatus"></p>
+    </div>
+
+    <div class="insight-cards">
+        <div class="card" id="incomeCard">Total Income: --</div>
+        <div class="card" id="expenseCard">Total Expense: --</div>
+        <div class="card" id="donationCard">Total Donations: --</div>
+        <div class="card" id="surplusCard">Surplus: --</div>
+        <div class="card" id="riskCard">Risk Level: --</div>
+        <div class="card" id="stabilityCard">Stability Score: --</div>
+    </div>
+
+    <h2>Charts</h2>
+    
+    <div class="chart-container">
+        <canvas id="incomeExpenseChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="donationPieChart"></canvas>
+    </div>
+
+    <div class="summary-section">
+        <h2>AI Summary</h2>
+        <ul id="summaryList"></ul>
+    </div>
+
+<script src="script_dashboard.js"></script>
+</body>
+</html>

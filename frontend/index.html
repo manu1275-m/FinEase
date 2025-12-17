@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinEase</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #0b1021 0%, #11192d 60%, #0b1021 100%);
+            color: #e0e0f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        body.logged-in {
+            display: block;
+        }
+        .auth-container {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+        .auth-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #e9ecf5;
+            cursor: pointer;
+            border-radius: 10px 0 0 10px;
+        }
+        .tab-button.active {
+            background: linear-gradient(90deg, #3fb8ff, #5ad4b1);
+            color: #0b1021;
+        }
+        .tab-button:last-child {
+            border-radius: 0 10px 10px 0;
+            border-left: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label { display: block; margin-bottom: 5px; font-size: 14px; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            color: #e9ecf5;
+            font-size: 15px;
+        }
+        input:focus { outline: 2px solid #3fb8ff; }
+        button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(90deg, #3fb8ff, #5ad4b1);
+            color: #0b1021;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .status { margin-top: 10px; font-size: 14px; text-align: center; }
+        .main-content { display: none; }
+        .main-content.show { display: block; }
+        .auth-container.hide { display: none; }
+        header {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .logo {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            font-size: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 24px auto 64px;
+            padding: 0 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 16px 18px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+        h2, h3 {
+            margin: 0 0 12px;
+        }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        canvas { background: rgba(0,0,0,0.06); border-radius: 12px; }
+        ul { padding-left: 18px; }
+        li { margin: 6px 0; }
+        @media (max-width: 640px) { header { flex-direction: column; align-items: flex-start; gap: 8px; } }
+    </style>
+</head>
+<body>
+    <div class="auth-container" id="authContainer">
+        <h2>FinEase</h2>
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="showLogin()">Login</button>
+            <button class="tab-button" onclick="showRegister()">Register</button>
+        </div>
+        <div id="loginForm">
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input id="loginEmail" type="email" placeholder="Enter your email" />
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input id="loginPassword" type="password" placeholder="Enter your password" />
+            </div>
+            <button onclick="login()">Login</button>
+            <div id="loginStatus" class="status"></div>
+        </div>
+        <div id="registerForm" style="display: none;">
+            <div class="form-group">
+                <label for="registerEmail">Email</label>
+                <input id="registerEmail" type="email" placeholder="Enter your email" />
+            </div>
+            <div class="form-group">
+                <label for="registerPassword">Password</label>
+                <input id="registerPassword" type="password" placeholder="Create a password" />
+            </div>
+            <div class="form-group">
+                <label for="registerConfirmPassword">Confirm Password</label>
+                <input id="registerConfirmPassword" type="password" placeholder="Confirm your password" />
+            </div>
+            <button onclick="register()">Register</button>
+            <div id="registerStatus" class="status"></div>
+        </div>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <header>
+            <div class="logo">FinEase · AI Financial Analyst</div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="pill">Backend: http://127.0.0.1:8011</div>
+                <button onclick="logout()" style="padding: 8px 16px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: #e0e0f0; cursor: pointer;">Logout</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="grid">
+                <section class="card">
+                    <h2>Funding Prediction</h2>
+                    <p>Enter latest financials to estimate future funding requirement.</p>
+                    <label for="incomeInput">Income</label>
+                    <input id="incomeInput" type="number" placeholder="e.g., 250000" />
+                    <label for="expenseInput">Expense</label>
+                    <input id="expenseInput" type="number" placeholder="e.g., 175000" />
+                    <label for="donationInput">Donations</label>
+                    <input id="donationInput" type="number" placeholder="e.g., 60000" />
+                    <button onclick="predictFinance()">Predict</button>
+                    <div id="predictionResult" class="status"></div>
+                </section>
+
+                <section class="card">
+                    <h2>Upload Financials (CSV/Excel)</h2>
+                    <p>Columns required: income, expense, donations.</p>
+                    <input id="fileInput" type="file" accept=".csv,.xlsx,.xls" />
+                    <button onclick="uploadFile()">Upload & Analyze</button>
+                    <div id="uploadStatus" class="status"></div>
+                </section>
+            </div>
+
+            <div class="grid" style="margin-top:20px;">
+                <div class="card">
+                    <h3>Key Metrics</h3>
+                    <div class="grid">
+                        <div class="card" style="padding:12px;">
+                            <div id="incomeCard">Total Income: –</div>
+                        </div>
+                        <div class="card" style="padding:12px;">
+                            <div id="expenseCard">Total Expense: –</div>
+                        </div>
+                        <div class="card" style="padding:12px;">
+                            <div id="donationCard">Total Donations: –</div>
+                        </div>
+                        <div class="card" style="padding:12px;">
+                            <div id="surplusCard">Surplus: –</div>
+                        </div>
+                        <div class="card" style="padding:12px;">
+                            <div id="riskCard">Risk Level: –</div>
+                        </div>
+                        <div class="card" style="padding:12px;">
+                            <div id="stabilityCard">Stability Score: –</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid" style="margin-top:20px;">
+                <div class="card">
+                    <h3>Income vs Expense</h3>
+                    <canvas id="incomeExpenseChart" height="200"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Donation Mix</h3>
+                    <canvas id="donationPieChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <h3>Summary</h3>
+                <ul id="summaryList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
