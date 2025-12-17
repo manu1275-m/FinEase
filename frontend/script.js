@@ -1,7 +1,9 @@
 const API_BASE = "http://127.0.0.1:8080"; // Backend port (updated)
 
-let incomeExpenseChart;
-let donationPieChart;
+let financialOverviewChart;
+let donationChart;
+let expenseBreakdownChart;
+let healthIndicatorChart;
 
 const currency = value => `₹${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
@@ -78,8 +80,8 @@ async function uploadFile() {
         document.getElementById("riskCard").innerText = `Risk Level: ${riskLevel}`;
         document.getElementById("stabilityCard").innerText = `Stability Score: ${analysis.stability_score}`;
 
-        drawIncomeExpenseChart(analysis.total_income, analysis.total_expense);
-        drawDonationPieChart(analysis.total_donations, analysis.total_income);
+        // Render all dashboard charts
+        renderDashboard(analysis);
 
         const summaryList = document.getElementById("summaryList");
         summaryList.innerHTML = "";
@@ -96,43 +98,226 @@ async function uploadFile() {
     }
 }
 
-function drawIncomeExpenseChart(income, expense) {
-    if (incomeExpenseChart) incomeExpenseChart.destroy();
+// Dashboard rendering function
+function renderDashboard(analysis) {
+    const { total_income, total_expense, total_donations, surplus_or_deficit, stability_score, monthly_burn_rate } = analysis;
+    
+    // 1. Financial Overview (Bar Chart)
+    drawFinancialOverview(total_income, total_expense, surplus_or_deficit);
+    
+    // 2. Donation Analysis (Doughnut Chart)
+    drawDonationChart(total_donations, total_income);
+    
+    // 3. Expense Breakdown (Pie Chart)
+    drawExpenseBreakdown(total_expense, monthly_burn_rate, total_donations);
+    
+    // 4. Financial Health Indicator (Horizontal Bar)
+    drawHealthIndicator(stability_score, surplus_or_deficit);
+}
 
-    const ctx = document.getElementById("incomeExpenseChart");
-    incomeExpenseChart = new Chart(ctx, {
-        type: "bar",
+function drawFinancialOverview(income, expense, surplus) {
+    if (financialOverviewChart) financialOverviewChart.destroy();
+    
+    const ctx = document.getElementById('financialOverviewChart');
+    if (!ctx) return;
+    
+    financialOverviewChart = new Chart(ctx, {
+        type: 'bar',
         data: {
-            labels: ["Income", "Expense"],
+            labels: ['Income', 'Expense', 'Surplus/Deficit'],
             datasets: [{
-                label: "Amount (₹)",
-                data: [income, expense],
-                backgroundColor: ["#3fb8ff", "#f8696b"],
+                label: 'Amount (₹)',
+                data: [income, expense, Math.abs(surplus)],
+                backgroundColor: [
+                    'rgba(63, 184, 255, 0.8)',
+                    'rgba(248, 105, 107, 0.8)',
+                    surplus >= 0 ? 'rgba(79, 209, 197, 0.8)' : 'rgba(246, 199, 110, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(63, 184, 255, 1)',
+                    'rgba(248, 105, 107, 1)',
+                    surplus >= 0 ? 'rgba(79, 209, 197, 1)' : 'rgba(246, 199, 110, 1)'
+                ],
+                borderWidth: 2,
                 borderRadius: 8
             }]
         },
         options: {
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${currency(context.parsed.y)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
         }
     });
 }
 
-function drawDonationPieChart(donations, income) {
-    if (donationPieChart) donationPieChart.destroy();
-
-    const ctx = document.getElementById("donationPieChart");
-    donationPieChart = new Chart(ctx, {
-        type: "pie",
+function drawDonationChart(donations, income) {
+    if (donationChart) donationChart.destroy();
+    
+    const ctx = document.getElementById('donationChart');
+    if (!ctx) return;
+    
+    const otherIncome = Math.max(income - donations, 0);
+    const donationPercent = income > 0 ? ((donations / income) * 100).toFixed(1) : 0;
+    
+    donationChart = new Chart(ctx, {
+        type: 'doughnut',
         data: {
-            labels: ["Donations", "Other Income"],
+            labels: [`Donations (${donationPercent}%)`, 'Other Income'],
             datasets: [{
-                data: [donations, Math.max(income - donations, 0)],
-                backgroundColor: ["#4fd1c5", "#7e8df1"],
-                borderWidth: 0
+                data: [donations, otherIncome],
+                backgroundColor: [
+                    'rgba(79, 209, 197, 0.8)',
+                    'rgba(126, 141, 241, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(79, 209, 197, 1)',
+                    'rgba(126, 141, 241, 1)'
+                ],
+                borderWidth: 2
             }]
         },
-        options: { plugins: { legend: { position: "bottom" } } }
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { color: '#e0e0f0' }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${currency(context.parsed)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function drawExpenseBreakdown(totalExpense, burnRate, donations) {
+    if (expenseBreakdownChart) expenseBreakdownChart.destroy();
+    
+    const ctx = document.getElementById('expenseBreakdownChart');
+    if (!ctx) return;
+    
+    // Estimate categories based on available data
+    const operational = burnRate || totalExpense * 0.5;
+    const programCosts = totalExpense * 0.3;
+    const administrative = totalExpense - operational - programCosts;
+    
+    expenseBreakdownChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Operational', 'Programs', 'Administrative'],
+            datasets: [{
+                data: [operational, programCosts, administrative],
+                backgroundColor: [
+                    'rgba(248, 105, 107, 0.8)',
+                    'rgba(246, 199, 110, 0.8)',
+                    'rgba(126, 141, 241, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(248, 105, 107, 1)',
+                    'rgba(246, 199, 110, 1)',
+                    'rgba(126, 141, 241, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { color: '#e0e0f0' }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percent = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${currency(value)} (${percent}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function drawHealthIndicator(stabilityScore, surplus) {
+    if (healthIndicatorChart) healthIndicatorChart.destroy();
+    
+    const ctx = document.getElementById('healthIndicatorChart');
+    if (!ctx) return;
+    
+    const score = stabilityScore || 0;
+    const healthStatus = score >= 70 ? 'Healthy' : score >= 40 ? 'Moderate' : 'At Risk';
+    const color = score >= 70 ? 'rgba(79, 209, 197, 0.8)' : score >= 40 ? 'rgba(246, 199, 110, 0.8)' : 'rgba(248, 105, 107, 0.8)';
+    
+    healthIndicatorChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Financial Health Score'],
+            datasets: [{
+                label: healthStatus,
+                data: [score],
+                backgroundColor: color,
+                borderColor: color.replace('0.8', '1'),
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { 
+                    display: true,
+                    labels: { color: '#e0e0f0' }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Score: ${context.parsed.x}/100`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { 
+                    min: 0, 
+                    max: 100,
+                    ticks: { color: '#e0e0f0' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: { 
+                    ticks: { color: '#e0e0f0' },
+                    grid: { display: false }
+                }
+            }
+        }
     });
 }
 

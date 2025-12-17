@@ -171,7 +171,6 @@
         <header>
             <div class="logo">FinEase · AI Financial Analyst</div>
             <div style="display: flex; align-items: center; gap: 16px;">
-                <div class="pill">Backend: http://127.0.0.1:8080</div>
                 <button onclick="logout()" style="padding: 8px 16px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: #e0e0f0; cursor: pointer;">Logout</button>
             </div>
         </header>
@@ -228,17 +227,28 @@
 
             <div class="grid" style="margin-top:20px;">
                 <div class="card">
-                    <h3>Income vs Expense</h3>
-                    <canvas id="incomeExpenseChart" height="200"></canvas>
+                    <h3>Financial Overview</h3>
+                    <canvas id="financialOverviewChart" height="200"></canvas>
                 </div>
                 <div class="card">
-                    <h3>Donation Mix</h3>
-                    <canvas id="donationPieChart" height="200"></canvas>
+                    <h3>Donation Analysis</h3>
+                    <canvas id="donationChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="grid" style="margin-top:20px;">
+                <div class="card">
+                    <h3>Expense Distribution</h3>
+                    <canvas id="expenseBreakdownChart" height="200"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Financial Health Indicator</h3>
+                    <canvas id="healthIndicatorChart" height="200"></canvas>
                 </div>
             </div>
 
             <div class="card" style="margin-top:20px;">
-                <h3>Summary</h3>
+                <h3>Key Insights</h3>
                 <ul id="summaryList"></ul>
             </div>
         </div>
