@@ -151,7 +151,7 @@ function showRegister() {
     document.querySelectorAll('.tab-button')[1].classList.add('active');
 }
 
-function login() {
+async function login() {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     const statusEl = document.getElementById('loginStatus');
@@ -161,18 +161,43 @@ function login() {
         return;
     }
 
-    // Simple auth simulation - in production, validate against backend
-    if (email && password) {
-        localStorage.setItem('authenticated', 'true');
+    if (password.length < 8) {
+        statusEl.innerText = 'Password must be at least 8 characters long.';
+        return;
+    }
+
+    statusEl.innerText = 'Logging in...';;
+
+    try {
+        const response = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            statusEl.innerText = data.detail || 'Login failed.';
+            return;
+        }
+
+        // Store user session for this tab only (clears on browser/tab close)
+        sessionStorage.setItem('authenticated', 'true');
+        sessionStorage.setItem('user_id', data.user_id);
+        sessionStorage.setItem('email', data.email);
+        
+        // Show main content
         document.getElementById('authContainer').classList.add('hide');
         document.getElementById('mainContent').classList.add('show');
         statusEl.innerText = '';
-    } else {
-        statusEl.innerText = 'Invalid credentials.';
+    } catch (err) {
+        statusEl.innerText = 'Could not reach backend. Is it running?';
+        console.error(err);
     }
 }
 
-function register() {
+async function register() {
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
     const confirmPassword = document.getElementById('registerConfirmPassword').value;
@@ -183,30 +208,75 @@ function register() {
         return;
     }
 
+    if (password.length < 8) {
+        statusEl.innerText = 'Password must be at least 8 characters long.';
+        return;
+    }
+
     if (password !== confirmPassword) {
         statusEl.innerText = 'Passwords do not match.';
         return;
     }
 
-    // Simple registration simulation - in production, send to backend
-    localStorage.setItem('authenticated', 'true');
-    document.getElementById('authContainer').classList.add('hide');
-    document.getElementById('mainContent').classList.add('show');
-    statusEl.innerText = '';
+    statusEl.innerText = 'Registering...';
+
+    try {
+        const response = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            statusEl.innerText = data.detail || 'Registration failed.';
+            return;
+        }
+
+        // Show success message and redirect to login
+        statusEl.innerText = 'Registration successful! Redirecting to login...';
+        
+        // Clear registration form
+        document.getElementById('registerEmail').value = '';
+        document.getElementById('registerPassword').value = '';
+        document.getElementById('registerConfirmPassword').value = '';
+        
+        // Redirect to login tab after 2 seconds
+        setTimeout(() => {
+            showLogin();
+            document.getElementById('loginEmail').focus();
+        }, 2000);
+    } catch (err) {
+        statusEl.innerText = 'Could not reach backend. Is it running?';
+        console.error(err);
+    }
 }
 
 function logout() {
+    // Clear both storages to ensure logout across flows
+    sessionStorage.clear();
     localStorage.removeItem('authenticated');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('email');
     document.getElementById('authContainer').classList.remove('hide');
     document.getElementById('mainContent').classList.remove('show');
     document.getElementById('loginEmail').value = '';
     document.getElementById('loginPassword').value = '';
+    document.getElementById('registerEmail').value = '';
+    document.getElementById('registerPassword').value = '';
+    document.getElementById('registerConfirmPassword').value = '';
 }
 
-// Check authentication on page load
+// Check authentication on page load (session-only)
 window.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('authenticated') === 'true') {
+    if (sessionStorage.getItem('authenticated') === 'true') {
         document.getElementById('authContainer').classList.add('hide');
         document.getElementById('mainContent').classList.add('show');
     }
+});
+
+// Ensure session clears on tab/browser close
+window.addEventListener('beforeunload', () => {
+    try { sessionStorage.clear(); } catch {}
 });

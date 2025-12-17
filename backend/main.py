@@ -6,6 +6,8 @@ from analysis import analyze_financial_file
 from predict import predict_finance
 from pathlib import Path
 import sqlite3
+import hashlib
+import secrets
 
 # --- Local DB helpers (avoid import path issues) ---
 DB_PATH = Path(__file__).resolve().parents[1] / "database" / "ngo_finance.db"
@@ -14,25 +16,69 @@ def get_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     return sqlite3.connect(str(DB_PATH), check_same_thread=False)
 
-def create_table():
+def create_tables():
     conn = get_db()
     cursor = conn.cursor()
+    
+    # Users table
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    
+    # Financial uploads table
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS ngo_financial_uploads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             total_income REAL,
             total_expense REAL,
             total_donations REAL,
             surplus_or_deficit REAL,
             risk_level TEXT,
             stability_score REAL,
-            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )
         """
     )
+    
+    # Predictions table
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ngo_predictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            income REAL,
+            expense REAL,
+            donations REAL,
+            future_funding_required REAL,
+            confidence_score REAL,
+            risk_level TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        """
+    )
+    
     conn.commit()
     conn.close()
+
+def hash_password(password: str) -> str:
+    """Hash password using SHA256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(password: str, hash: str) -> bool:
+    """Verify password against hash"""
+    return hash_password(password) == hash
+
 from fastapi import Depends
 from typing import Any, Dict
 
@@ -54,25 +100,34 @@ app.add_middleware(
 @app.on_event("startup")
 def startup_event():
     try:
-        create_table()
+        create_tables()
     except Exception as e:
         # Avoid crashing startup if table creation fails; surface via health
         print(f"[DB] Startup table creation failed: {e}")
 
 
 # ----------------------------
-#  Prediction Input Schema
+#  Input Schemas
 # ----------------------------
 class FinanceInput(BaseModel):
     income: float
     expense: float
     donations: float
 
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 
 # ----------------------------
 #  ROOT ENDPOINT
 # ----------------------------
 @app.get("/")
+
 def root():
     return {
         "message": "FinEase Backend Running Successfully",
@@ -90,6 +145,79 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "OK", "server": "running"}
+
+
+# ----------------------------
+#  AUTHENTICATION ENDPOINTS
+# ----------------------------
+@app.post("/auth/register")
+def register(req: RegisterRequest):
+    try:
+        # Validate password length
+        if len(req.password) < 8:
+            raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Check if email already exists
+        cursor.execute("SELECT id FROM users WHERE email = ?", (req.email,))
+        if cursor.fetchone():
+            conn.close()
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Hash password and insert new user
+        password_hash = hash_password(req.password)
+        cursor.execute(
+            "INSERT INTO users (email, password_hash) VALUES (?, ?)",
+            (req.email, password_hash)
+        )
+        conn.commit()
+        user_id = cursor.lastrowid
+        conn.close()
+        
+        return {
+            "status": "success",
+            "message": "User registered successfully",
+            "user_id": user_id,
+            "email": req.email
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/auth/login")
+def login(req: LoginRequest):
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Find user by email
+        cursor.execute("SELECT id, password_hash FROM users WHERE email = ?", (req.email,))
+        result = cursor.fetchone()
+        conn.close()
+        
+        if not result:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        user_id, password_hash = result
+        
+        # Verify password
+        if not verify_password(req.password, password_hash):
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        return {
+            "status": "success",
+            "message": "Login successful",
+            "user_id": user_id,
+            "email": req.email
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ----------------------------
