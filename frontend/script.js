@@ -1,4 +1,4 @@
-const API_BASE = "http://127.0.0.1:8011"; // Backend port
+const API_BASE = "http://127.0.0.1:8080"; // Backend port (updated)
 
 let incomeExpenseChart;
 let donationPieChart;
@@ -135,3 +135,78 @@ function drawDonationPieChart(donations, income) {
         options: { plugins: { legend: { position: "bottom" } } }
     });
 }
+
+// Authentication functions
+function showLogin() {
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('registerForm').style.display = 'none';
+    document.querySelectorAll('.tab-button')[0].classList.add('active');
+    document.querySelectorAll('.tab-button')[1].classList.remove('active');
+}
+
+function showRegister() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+    document.querySelectorAll('.tab-button')[0].classList.remove('active');
+    document.querySelectorAll('.tab-button')[1].classList.add('active');
+}
+
+function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const statusEl = document.getElementById('loginStatus');
+
+    if (!email || !password) {
+        statusEl.innerText = 'Please enter both email and password.';
+        return;
+    }
+
+    // Simple auth simulation - in production, validate against backend
+    if (email && password) {
+        localStorage.setItem('authenticated', 'true');
+        document.getElementById('authContainer').classList.add('hide');
+        document.getElementById('mainContent').classList.add('show');
+        statusEl.innerText = '';
+    } else {
+        statusEl.innerText = 'Invalid credentials.';
+    }
+}
+
+function register() {
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+    const statusEl = document.getElementById('registerStatus');
+
+    if (!email || !password || !confirmPassword) {
+        statusEl.innerText = 'Please fill in all fields.';
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        statusEl.innerText = 'Passwords do not match.';
+        return;
+    }
+
+    // Simple registration simulation - in production, send to backend
+    localStorage.setItem('authenticated', 'true');
+    document.getElementById('authContainer').classList.add('hide');
+    document.getElementById('mainContent').classList.add('show');
+    statusEl.innerText = '';
+}
+
+function logout() {
+    localStorage.removeItem('authenticated');
+    document.getElementById('authContainer').classList.remove('hide');
+    document.getElementById('mainContent').classList.remove('show');
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+}
+
+// Check authentication on page load
+window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('authenticated') === 'true') {
+        document.getElementById('authContainer').classList.add('hide');
+        document.getElementById('mainContent').classList.add('show');
+    }
+});
