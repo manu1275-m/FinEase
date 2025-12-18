@@ -2,45 +2,101 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FinEase Dashboard</title>
-    <link rel="stylesheet" href="script.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #0b1021 0%, #11192d 60%, #0b1021 100%);
+            color: #e0e0f0;
+            min-height: 100vh;
+        }
+        header {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .logo {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            font-size: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 24px auto 64px;
+            padding: 0 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 16px 18px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+        h2, h3 {
+            margin: 0 0 12px;
+        }
+        button {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(90deg, #3fb8ff, #5ad4b1);
+            color: #0b1021;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            color: #e9ecf5;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .status { margin-top: 10px; font-size: 14px; }
+        canvas { background: rgba(0,0,0,0.06); border-radius: 12px; }
+        ul { padding-left: 18px; }
+        li { margin: 6px 0; }
+        @media (max-width: 640px) { header { flex-direction: column; align-items: flex-start; gap: 8px; } }
+    </style>
 </head>
 <body>
+    <header>
+        <div class="logo">FinEase · AI Financial Analyst</div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <button onclick="logout()" style="padding: 8px 16px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: #e0e0f0; cursor: pointer;">Logout</button>
+        </div>
+    </header>
 
-    <h1>FinEase – AI Financial Dashboard</h1>
-
-    <div class="upload-section">
-        <h2>Upload NGO Financial CSV/Excel</h2>
-        <input type="file" id="fileInput">
-        <button onclick="uploadFile()">Analyze File</button>
-        <p id="uploadStatus"></p>
+    <div class="container" id="dashboardPage">
+        <div class="card" style="margin-bottom:20px;">
+            <h2>Step 1: Upload your financial dataset</h2>
+            <p style="margin-bottom:8px;">Upload a CSV or Excel file to generate an AI-driven financial report.</p>
+            <p style="font-size:13px; opacity:0.85; margin-bottom:12px;">Required columns: <strong>income</strong>, <strong>expense</strong>, <strong>donations</strong>.</p>
+            <input id="fileInput" type="file" accept=".csv,.xlsx,.xls" />
+            <button onclick="uploadFile()">Upload & Analyze</button>
+            <div id="uploadStatus" class="status"></div>
+        </div>
+        <div class="card" style="margin-top:16px;">
+            <p style="margin:0; font-size:13px; opacity:0.85;">After upload, you will be redirected to the report page with full insights and charts.</p>
+        </div>
     </div>
 
-    <div class="insight-cards">
-        <div class="card" id="incomeCard">Total Income: --</div>
-        <div class="card" id="expenseCard">Total Expense: --</div>
-        <div class="card" id="donationCard">Total Donations: --</div>
-        <div class="card" id="surplusCard">Surplus: --</div>
-        <div class="card" id="riskCard">Risk Level: --</div>
-        <div class="card" id="stabilityCard">Stability Score: --</div>
-    </div>
-
-    <h2>Charts</h2>
-    
-    <div class="chart-container">
-        <canvas id="incomeExpenseChart"></canvas>
-    </div>
-
-    <div class="chart-container">
-        <canvas id="donationPieChart"></canvas>
-    </div>
-
-    <div class="summary-section">
-        <h2>AI Summary</h2>
-        <ul id="summaryList"></ul>
-    </div>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

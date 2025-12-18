@@ -133,6 +133,9 @@
 <body>
     <div class="auth-container" id="authContainer">
         <h2>FinEase</h2>
+        <p style="text-align:center; margin-top:-8px; margin-bottom:16px; font-size:13px; opacity:0.85;">
+            Login or register to access the financial analysis dashboard.
+        </p>
         <div class="tab-buttons">
             <button class="tab-button active" onclick="showLogin()">Login</button>
             <button class="tab-button" onclick="showRegister()">Register</button>
@@ -164,93 +167,6 @@
             </div>
             <button onclick="register()">Register</button>
             <div id="registerStatus" class="status"></div>
-        </div>
-    </div>
-
-    <div class="main-content" id="mainContent">
-        <header>
-            <div class="logo">FinEase · AI Financial Analyst</div>
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <button onclick="logout()" style="padding: 8px 16px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: #e0e0f0; cursor: pointer;">Logout</button>
-            </div>
-        </header>
-
-        <div class="container">
-            <div class="grid">
-                <section class="card">
-                    <h2>Funding Prediction</h2>
-                    <p>Enter latest financials to estimate future funding requirement.</p>
-                    <label for="incomeInput">Income</label>
-                    <input id="incomeInput" type="number" placeholder="e.g., 250000" />
-                    <label for="expenseInput">Expense</label>
-                    <input id="expenseInput" type="number" placeholder="e.g., 175000" />
-                    <label for="donationInput">Donations</label>
-                    <input id="donationInput" type="number" placeholder="e.g., 60000" />
-                    <button onclick="predictFinance()">Predict</button>
-                    <div id="predictionResult" class="status"></div>
-                </section>
-
-                <section class="card">
-                    <h2>Upload Financials (CSV/Excel)</h2>
-                    <p>Columns required: income, expense, donations.</p>
-                    <input id="fileInput" type="file" accept=".csv,.xlsx,.xls" />
-                    <button onclick="uploadFile()">Upload & Analyze</button>
-                    <div id="uploadStatus" class="status"></div>
-                </section>
-            </div>
-
-            <div class="grid" style="margin-top:20px;">
-                <div class="card">
-                    <h3>Key Metrics</h3>
-                    <div class="grid">
-                        <div class="card" style="padding:12px;">
-                            <div id="incomeCard">Total Income: –</div>
-                        </div>
-                        <div class="card" style="padding:12px;">
-                            <div id="expenseCard">Total Expense: –</div>
-                        </div>
-                        <div class="card" style="padding:12px;">
-                            <div id="donationCard">Total Donations: –</div>
-                        </div>
-                        <div class="card" style="padding:12px;">
-                            <div id="surplusCard">Surplus: –</div>
-                        </div>
-                        <div class="card" style="padding:12px;">
-                            <div id="riskCard">Risk Level: –</div>
-                        </div>
-                        <div class="card" style="padding:12px;">
-                            <div id="stabilityCard">Stability Score: –</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid" style="margin-top:20px;">
-                <div class="card">
-                    <h3>Financial Overview</h3>
-                    <canvas id="financialOverviewChart" height="200"></canvas>
-                </div>
-                <div class="card">
-                    <h3>Donation Analysis</h3>
-                    <canvas id="donationChart" height="200"></canvas>
-                </div>
-            </div>
-
-            <div class="grid" style="margin-top:20px;">
-                <div class="card">
-                    <h3>Expense Distribution</h3>
-                    <canvas id="expenseBreakdownChart" height="200"></canvas>
-                </div>
-                <div class="card">
-                    <h3>Financial Health Indicator</h3>
-                    <canvas id="healthIndicatorChart" height="200"></canvas>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top:20px;">
-                <h3>Key Insights</h3>
-                <ul id="summaryList"></ul>
-            </div>
         </div>
     </div>
 

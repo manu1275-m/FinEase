@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinEase Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #0b1021 0%, #11192d 60%, #0b1021 100%);
+            color: #e0e0f0;
+            min-height: 100vh;
+        }
+        header {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .logo { font-weight: 600; letter-spacing: 0.5px; font-size: 20px; }
+        .container { max-width: 1100px; margin: 24px auto 64px; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 16px 18px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+        h2, h3 { margin: 0 0 12px; }
+        button {
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(90deg, #3fb8ff, #5ad4b1);
+            color: #0b1021;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        canvas { background: rgba(0,0,0,0.06); border-radius: 12px; }
+        ul { padding-left: 18px; }
+        li { margin: 6px 0; }
+        @media (max-width: 640px) { header { flex-direction: column; align-items: flex-start; gap: 8px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">FinEase · Report</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button onclick="window.location.href='dashboard.html'" style="background: rgba(255,255,255,0.1); color:#e0e0f0;">Upload Another File</button>
+            <button onclick="logout()" style="background: rgba(255,255,255,0.1); color:#e0e0f0;">Logout</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card" style="margin-bottom:20px;">
+            <h2>Latest AI Financial Report</h2>
+            <p style="opacity:0.85; font-size:13px;">This view loads the most recent analysis from your last upload.</p>
+        </div>
+
+        <div class="grid">
+            <section class="card">
+                <h3>Key Metrics</h3>
+                <div class="grid">
+                    <div class="card" style="padding:12px;">
+                        <div id="incomeCard">Total Income: –</div>
+                    </div>
+                    <div class="card" style="padding:12px;">
+                        <div id="expenseCard">Total Expense: –</div>
+                    </div>
+                    <div class="card" style="padding:12px;">
+                        <div id="donationCard">Total Donations: –</div>
+                    </div>
+                    <div class="card" style="padding:12px;">
+                        <div id="surplusCard">Surplus: –</div>
+                    </div>
+                    <div class="card" style="padding:12px;">
+                        <div id="riskCard">Risk Level: –</div>
+                    </div>
+                    <div class="card" style="padding:12px;">
+                        <div id="stabilityCard">Stability Score: –</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="grid" style="margin-top:20px;">
+            <div class="card">
+                <h3>Financial Overview</h3>
+                <canvas id="financialOverviewChart" height="200"></canvas>
+            </div>
+            <div class="card">
+                <h3>Donation Analysis</h3>
+                <canvas id="donationChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="grid" style="margin-top:20px;">
+            <div class="card">
+                <h3>Expense Distribution</h3>
+                <canvas id="expenseBreakdownChart" height="200"></canvas>
+            </div>
+            <div class="card">
+                <h3>Financial Health Indicator</h3>
+                <canvas id="healthIndicatorChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+            <h3>Key Insights</h3>
+            <ul id="summaryList"></ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

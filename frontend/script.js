@@ -7,6 +7,42 @@ let healthIndicatorChart;
 
 const currency = value => `₹${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
+// Apply analysis data to the report view (cards, charts, summary)
+function applyAnalysis(analysis) {
+    if (!analysis) return;
+
+    const incomeCard = document.getElementById("incomeCard");
+    if (incomeCard) incomeCard.innerText = `Total Income: ${currency(analysis.total_income)}`;
+
+    const expenseCard = document.getElementById("expenseCard");
+    if (expenseCard) expenseCard.innerText = `Total Expense: ${currency(analysis.total_expense)}`;
+
+    const donationCard = document.getElementById("donationCard");
+    if (donationCard) donationCard.innerText = `Total Donations: ${currency(analysis.total_donations)}`;
+
+    const surplusCard = document.getElementById("surplusCard");
+    if (surplusCard) surplusCard.innerText = `Surplus: ${currency(analysis.surplus_or_deficit)}`;
+
+    const riskCard = document.getElementById("riskCard");
+    const riskLevel = analysis.risk_level || (analysis.surplus_or_deficit < 0 ? "High" : "Low");
+    if (riskCard) riskCard.innerText = `Risk Level: ${riskLevel}`;
+
+    const stabilityCard = document.getElementById("stabilityCard");
+    if (stabilityCard) stabilityCard.innerText = `Stability Score: ${analysis.stability_score}`;
+
+    renderDashboard(analysis);
+
+    const summaryList = document.getElementById("summaryList");
+    if (summaryList) {
+        summaryList.innerHTML = "";
+        (analysis.summary || []).forEach(item => {
+            const li = document.createElement("li");
+            li.innerText = item;
+            summaryList.appendChild(li);
+        });
+    }
+}
+
 async function predictFinance() {
     const income = parseFloat(document.getElementById("incomeInput").value || "0");
     const expense = parseFloat(document.getElementById("expenseInput").value || "0");
@@ -72,26 +108,12 @@ async function uploadFile() {
 
         const analysis = data.analysis;
 
-        document.getElementById("incomeCard").innerText = `Total Income: ${currency(analysis.total_income)}`;
-        document.getElementById("expenseCard").innerText = `Total Expense: ${currency(analysis.total_expense)}`;
-        document.getElementById("donationCard").innerText = `Total Donations: ${currency(analysis.total_donations)}`;
-        document.getElementById("surplusCard").innerText = `Surplus: ${currency(analysis.surplus_or_deficit)}`;
-        const riskLevel = analysis.risk_level || (analysis.surplus_or_deficit < 0 ? "High" : "Low");
-        document.getElementById("riskCard").innerText = `Risk Level: ${riskLevel}`;
-        document.getElementById("stabilityCard").innerText = `Stability Score: ${analysis.stability_score}`;
-
-        // Render all dashboard charts
-        renderDashboard(analysis);
-
-        const summaryList = document.getElementById("summaryList");
-        summaryList.innerHTML = "";
-        (analysis.summary || []).forEach(item => {
-            const li = document.createElement("li");
-            li.innerText = item;
-            summaryList.appendChild(li);
-        });
-
-        statusEl.innerText = "Analysis complete.";
+        // Persist analysis for the report page and redirect there
+        sessionStorage.setItem('lastAnalysis', JSON.stringify(analysis));
+        statusEl.innerText = "Analysis complete. Redirecting to report...";
+        setTimeout(() => {
+            window.location.href = 'report.html';
+        }, 300);
     } catch (err) {
         statusEl.innerText = "Could not reach backend. Is it running?";
         console.error(err);
@@ -358,7 +380,7 @@ async function login() {
         return;
     }
 
-    statusEl.innerText = 'Logging in...';;
+    statusEl.innerText = 'Logging in...';
 
     try {
         const response = await fetch(`${API_BASE}/auth/login`, {
@@ -378,11 +400,9 @@ async function login() {
         sessionStorage.setItem('authenticated', 'true');
         sessionStorage.setItem('user_id', data.user_id);
         sessionStorage.setItem('email', data.email);
-        
-        // Show main content
-        document.getElementById('authContainer').classList.add('hide');
-        document.getElementById('mainContent').classList.add('show');
-        statusEl.innerText = '';
+
+        // Redirect to dashboard page after successful login
+        window.location.href = 'dashboard.html';
     } catch (err) {
         statusEl.innerText = 'Could not reach backend. Is it running?';
         console.error(err);
@@ -458,24 +478,57 @@ function logout() {
     localStorage.removeItem('authenticated');
     localStorage.removeItem('user_id');
     localStorage.removeItem('email');
-    document.getElementById('authContainer').classList.remove('hide');
-    document.getElementById('mainContent').classList.remove('show');
-    document.getElementById('loginEmail').value = '';
-    document.getElementById('loginPassword').value = '';
-    document.getElementById('registerEmail').value = '';
-    document.getElementById('registerPassword').value = '';
-    document.getElementById('registerConfirmPassword').value = '';
+
+    // If we're on the login page, just reset the forms; otherwise redirect back to login
+    const isIndex = window.location.pathname.toLowerCase().endsWith('index.html') || window.location.pathname.endsWith('/') || window.location.pathname === '';
+    if (isIndex) {
+        const authContainer = document.getElementById('authContainer');
+        if (authContainer) authContainer.classList.remove('hide');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const registerEmail = document.getElementById('registerEmail');
+        const registerPassword = document.getElementById('registerPassword');
+        const registerConfirmPassword = document.getElementById('registerConfirmPassword');
+        if (loginEmail) loginEmail.value = '';
+        if (loginPassword) loginPassword.value = '';
+        if (registerEmail) registerEmail.value = '';
+        if (registerPassword) registerPassword.value = '';
+        if (registerConfirmPassword) registerConfirmPassword.value = '';
+    } else {
+        window.location.href = 'index.html';
+    }
 }
 
-// Check authentication on page load (session-only)
+// Check authentication on page load (session-only) and route to correct page
 window.addEventListener('DOMContentLoaded', () => {
-    if (sessionStorage.getItem('authenticated') === 'true') {
-        document.getElementById('authContainer').classList.add('hide');
-        document.getElementById('mainContent').classList.add('show');
+    const path = window.location.pathname.toLowerCase();
+    const isDashboard = path.includes('dashboard.html');
+    const isReport = path.includes('report.html');
+    const isIndex = path.includes('index.html') || (!isDashboard && !isReport && (path === '/' || path === ''));
+    const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
+
+    if (isIndex && isAuthenticated) {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+
+    if ((isDashboard || isReport) && !isAuthenticated) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    if (isReport) {
+        const stored = sessionStorage.getItem('lastAnalysis');
+        if (!stored) {
+            window.location.href = 'dashboard.html';
+            return;
+        }
+        try {
+            const analysis = JSON.parse(stored);
+            applyAnalysis(analysis);
+        } catch (e) {
+            window.location.href = 'dashboard.html';
+        }
     }
 });
 
-// Ensure session clears on tab/browser close
-window.addEventListener('beforeunload', () => {
-    try { sessionStorage.clear(); } catch {}
-});
