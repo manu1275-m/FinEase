@@ -346,6 +346,13 @@ async function login() {
         return;
     }
 
+    // Validate email format - must contain at least one letter before @
+    const emailRegex = /^[a-zA-Z0-9._-]*[a-zA-Z][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+        statusEl.innerText = 'Please enter a valid email address with letters.';
+        return;
+    }
+
     if (password.length < 8) {
         statusEl.innerText = 'Password must be at least 8 characters long.';
         return;
@@ -390,6 +397,13 @@ async function register() {
 
     if (!email || !password || !confirmPassword) {
         statusEl.innerText = 'Please fill in all fields.';
+        return;
+    }
+
+    // Validate email format - must contain at least one letter before @
+    const emailRegex = /^[a-zA-Z0-9._-]*[a-zA-Z][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+        statusEl.innerText = 'Please enter a valid email address with letters.';
         return;
     }
 
